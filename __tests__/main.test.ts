@@ -25,7 +25,7 @@ test('gets a line number', () => {
 // shows how the runner will run a javascript action with env / stdout protocol
 test('test runs', () => {
   process.env['INPUT_GITHUBTOKEN'] = '123'
-  process.env['INPUT_PACKAGEPATH'] = '__tests__/test-package.json'
+  process.env['INPUT_PACKAGEPATH'] = 'package.json'
   const np = process.execPath
   const ip = path.join(__dirname, '..', 'lib', 'main.js')
   const options: cp.ExecFileSyncOptions = {

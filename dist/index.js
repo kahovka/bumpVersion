@@ -39,7 +39,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-/* eslint-disable no-console */
 const core = __importStar(__webpack_require__(2186));
 const exec_1 = __webpack_require__(1514);
 const fs = __importStar(__webpack_require__(5747));
@@ -58,11 +57,18 @@ function run() {
         const options = {
             listeners: {
                 stdout: (data) => {
-                    myOutput += data.toString();
+                    myOutput = data.toString();
                 }
             }
         };
-        yield exec_1.exec('git', ['log', `-L${lineNo},${lineNo}:${packagePath}`], options);
+        yield exec_1.exec('git', [
+            'log',
+            `-L${lineNo},${lineNo}:${path_1.default.resolve(__dirname, '../', packagePath)}`
+        ], options);
+        const lastChangeHash = myOutput.split(/[\r?\n\s]/)[1];
+        core.debug(myOutput.split(/[\r?\n\s]/).join('='));
+        core.debug(lastChangeHash);
+        yield exec_1.exec('git', ['rev-list', `${lastChangeHash}..HEAD`], options);
         core.debug(myOutput);
     });
 }

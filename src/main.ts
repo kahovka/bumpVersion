@@ -19,11 +19,22 @@ async function run(): Promise<void> {
   const options = {
     listeners: {
       stdout: (data: Buffer) => {
-        myOutput += data.toString()
+        myOutput = data.toString()
       }
     }
   }
-  await exec('git', ['log', `-L${lineNo},${lineNo}:${packagePath}`], options)
+  await exec(
+    'git',
+    [
+      'log',
+      `-L${lineNo},${lineNo}:${path.resolve(__dirname, '../', packagePath)}`
+    ],
+    options
+  )
+  const lastChangeHash = myOutput.split(/[\r?\n\s]/)[1]
+  core.debug(myOutput.split(/[\r?\n\s]/).join('='))
+  core.debug(lastChangeHash)
+  await exec('git', ['rev-list', `${lastChangeHash}..HEAD`], options)
   core.debug(myOutput)
 }
 
