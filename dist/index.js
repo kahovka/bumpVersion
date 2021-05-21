@@ -44,6 +44,7 @@ const exec_1 = __webpack_require__(1514);
 const fs = __importStar(__webpack_require__(5747));
 const path_1 = __importDefault(__webpack_require__(5622));
 const utils_1 = __webpack_require__(918);
+const semver = __importStar(__webpack_require__(1383));
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         const githubToken = core.getInput('githubtoken', { required: true });
@@ -66,10 +67,19 @@ function run() {
             `-L${lineNo},${lineNo}:${path_1.default.resolve(__dirname, '../', packagePath)}`
         ], options);
         const lastChangeHash = myOutput.split(/[\r?\n\s]/)[1];
-        core.debug(myOutput.split(/[\r?\n\s]/).join('='));
-        core.debug(lastChangeHash);
-        yield exec_1.exec('git', ['rev-list', `${lastChangeHash}..HEAD`], options);
-        core.debug(myOutput);
+        yield exec_1.exec('git', ['log', `${lastChangeHash}..HEAD`, `--format=oneline`], options);
+        const commitsToParse = myOutput.split(/\r?\n/);
+        let newVersion = version;
+        for (const commit of commitsToParse.reverse()) {
+            const message = commit.split(/\s(.*)/)[1];
+            // there are sometimes empty lines
+            if (message) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                newVersion = semver.inc(newVersion, 'patch');
+                core.debug(message);
+                core.debug(newVersion);
+            }
+        }
     });
 }
 run();
