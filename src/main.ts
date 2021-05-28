@@ -33,24 +33,61 @@ async function run(): Promise<void> {
     options
   )
   const lastChangeHash = myOutput.split(/[\r?\n\s]/)[1]
+  core.debug(lastChangeHash)
+
+  // needs to reset output every time
+  myOutput = ''
   await exec(
     'git',
     ['log', `${lastChangeHash}..HEAD`, `--format=oneline`],
     options
   )
-  const commitsToParse = myOutput.split(/\r?\n/)
 
   let newVersion = version
-  for (const commit of commitsToParse.reverse()) {
-    const message = commit.split(/\s(.*)/)[1]
-    // there are sometimes empty lines
-    if (message) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      newVersion = semver.inc(newVersion, 'patch')!
-      core.debug(message)
+  if (myOutput) {
+    const commitsToParse = myOutput.split(/\r?\n/)
+    for (const commit of commitsToParse.reverse()) {
+      const message = commit.split(/\s(.*)/)[1]
+      // there are sometimes empty lines
+      if (message) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        newVersion = semver.inc(newVersion, 'patch')!
+      }
       core.debug(newVersion)
+
+      // patch version in last commit
+
+      const newPackageContent = packageContent.replace(
+        `"version": "${version}"`,
+        `"version": "${newVersion}"`
+      )
+
+      fs.writeFileSync(
+        path.resolve(__dirname, '../', packagePath),
+        newPackageContent
+      )
+      // setup action stuff
+      await exec('git', [
+        'config',
+        'user.name',
+        `"${process.env.GITHUB_USER || 'Automated Version Bump'}"`
+      ])
+      await exec('git', [
+        'config',
+        'user.email',
+        `"${
+          process.env.GITHUB_EMAIL || 'bump-version@users.noreply.github.com'
+        }"`
+      ])
+      await exec('git', ['commit', '-am', 'Bump version'])
+      await exec('git', ['push'])
+      // push
     }
+  } else {
+    core.debug('no new commits given, no changes to process')
   }
+
+  // patch version in last commit
 }
 
 run()

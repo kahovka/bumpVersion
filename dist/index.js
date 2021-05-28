@@ -47,6 +47,7 @@ const utils_1 = __webpack_require__(918);
 const semver = __importStar(__webpack_require__(1383));
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
+        console.log(exec_1.exec);
         const githubToken = core.getInput('githubtoken', { required: true });
         const packagePath = core.getInput('packagepath', { required: true });
         const packageContent = fs.readFileSync(path_1.default.resolve(__dirname, '../', packagePath), 'utf-8');
@@ -67,19 +68,44 @@ function run() {
             `-L${lineNo},${lineNo}:${path_1.default.resolve(__dirname, '../', packagePath)}`
         ], options);
         const lastChangeHash = myOutput.split(/[\r?\n\s]/)[1];
+        core.debug(lastChangeHash);
+        // needs to reset output every time
+        myOutput = '';
         yield exec_1.exec('git', ['log', `${lastChangeHash}..HEAD`, `--format=oneline`], options);
-        const commitsToParse = myOutput.split(/\r?\n/);
         let newVersion = version;
-        for (const commit of commitsToParse.reverse()) {
-            const message = commit.split(/\s(.*)/)[1];
-            // there are sometimes empty lines
-            if (message) {
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                newVersion = semver.inc(newVersion, 'patch');
-                core.debug(message);
+        if (myOutput) {
+            const commitsToParse = myOutput.split(/\r?\n/);
+            for (const commit of commitsToParse.reverse()) {
+                const message = commit.split(/\s(.*)/)[1];
+                // there are sometimes empty lines
+                if (message) {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    newVersion = semver.inc(newVersion, 'patch');
+                }
                 core.debug(newVersion);
+                // patch version in last commit
+                const newPackageContent = packageContent.replace(`"version": "${version}"`, `"version": "${newVersion}"`);
+                fs.writeFileSync(path_1.default.resolve(__dirname, '../', packagePath), newPackageContent);
+                // setup action stuff
+                yield exec_1.exec('git', [
+                    'config',
+                    'user.name',
+                    `"${process.env.GITHUB_USER || 'Automated Version Bump'}"`
+                ]);
+                yield exec_1.exec('git', [
+                    'config',
+                    'user.email',
+                    `"${process.env.GITHUB_EMAIL || 'bump-version@users.noreply.github.com'}"`
+                ]);
+                yield exec_1.exec('git', ['commit', '-am', 'Bump version']);
+                yield exec_1.exec('git', ['push']);
+                // push
             }
         }
+        else {
+            core.debug('no new commits given, no changes to process');
+        }
+        // patch version in last commit
     });
 }
 run();

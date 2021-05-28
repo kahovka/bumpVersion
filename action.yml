@@ -2,11 +2,11 @@ name: 'Bump version action'
 description: 'Action to bump version'
 author: 'kahovka'
 inputs:
-  githubtoken: # change this
+  githubtoken: 
     required: true
     description: 'github token for action'
-    default: $ {{ secrets.GITHUB_TOKEN }}  
-  packagepath: # change this
+    default: $ {{ secrets.GITHUB_TOKEN }} 
+  packagepath: 
     required: true
     description: 'path to package.json'
     default: 'package.json'
