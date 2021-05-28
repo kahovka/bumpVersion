@@ -45,6 +45,7 @@ async function run(): Promise<void> {
 
   let newVersion = version
   if (myOutput) {
+    core.debug('Will bump version')
     const commitsToParse = myOutput.split(/\r?\n/)
     for (const commit of commitsToParse.reverse()) {
       const message = commit.split(/\s(.*)/)[1]
@@ -55,8 +56,6 @@ async function run(): Promise<void> {
       }
       core.debug(newVersion)
 
-      // patch version in last commit
-
       const newPackageContent = packageContent.replace(
         `"version": "${version}"`,
         `"version": "${newVersion}"`
@@ -66,7 +65,7 @@ async function run(): Promise<void> {
         path.resolve(__dirname, '../', packagePath),
         newPackageContent
       )
-      // setup action stuff
+      core.debug('Updated package.json')
       await exec('git', [
         'config',
         'user.name',
@@ -81,13 +80,11 @@ async function run(): Promise<void> {
       ])
       await exec('git', ['commit', '-am', 'Bump version'])
       await exec('git', ['push'])
-      // push
+      core.debug('Pushed new version file')
     }
   } else {
-    core.debug('no new commits given, no changes to process')
+    core.debug('Error. No changes applied')
   }
-
-  // patch version in last commit
 }
 
 run()

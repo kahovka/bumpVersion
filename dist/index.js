@@ -47,7 +47,6 @@ const utils_1 = __webpack_require__(918);
 const semver = __importStar(__webpack_require__(1383));
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        console.log(exec_1.exec);
         const githubToken = core.getInput('githubtoken', { required: true });
         const packagePath = core.getInput('packagepath', { required: true });
         const packageContent = fs.readFileSync(path_1.default.resolve(__dirname, '../', packagePath), 'utf-8');
@@ -74,6 +73,7 @@ function run() {
         yield exec_1.exec('git', ['log', `${lastChangeHash}..HEAD`, `--format=oneline`], options);
         let newVersion = version;
         if (myOutput) {
+            core.debug('Will bump version');
             const commitsToParse = myOutput.split(/\r?\n/);
             for (const commit of commitsToParse.reverse()) {
                 const message = commit.split(/\s(.*)/)[1];
@@ -83,10 +83,9 @@ function run() {
                     newVersion = semver.inc(newVersion, 'patch');
                 }
                 core.debug(newVersion);
-                // patch version in last commit
                 const newPackageContent = packageContent.replace(`"version": "${version}"`, `"version": "${newVersion}"`);
                 fs.writeFileSync(path_1.default.resolve(__dirname, '../', packagePath), newPackageContent);
-                // setup action stuff
+                core.debug('Updated package.json');
                 yield exec_1.exec('git', [
                     'config',
                     'user.name',
@@ -99,13 +98,12 @@ function run() {
                 ]);
                 yield exec_1.exec('git', ['commit', '-am', 'Bump version']);
                 yield exec_1.exec('git', ['push']);
-                // push
+                core.debug('Pushed new version file');
             }
         }
         else {
-            core.debug('no new commits given, no changes to process');
+            core.debug('Error. No changes applied');
         }
-        // patch version in last commit
     });
 }
 run();
