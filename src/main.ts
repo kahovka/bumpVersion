@@ -7,7 +7,6 @@ import * as semver from 'semver'
 
 async function run(): Promise<void> {
   try {
-    const githubToken: string = core.getInput('githubtoken', { required: true })
     const packagePath: string = core.getInput('packagepath', { required: true })
 
     const majorTokens: string[] = core
@@ -31,8 +30,7 @@ async function run(): Promise<void> {
     )
     const version = readVersion(packageContent)
     const lineNo = getLineNo(packageContent)
-    core.debug(`Token starts with: ${githubToken.slice(0, 2)}`)
-    core.debug(` Version: ${version}, line number ${lineNo}`)
+
     let myOutput = ''
     const options = {
       listeners: {
@@ -62,7 +60,6 @@ async function run(): Promise<void> {
       ['log', `${lastChangeHash}..HEAD`, `--format=oneline`, `--all`],
       options
     )
-    console.log(`History since last change: ${myOutput}`)
     let newVersion = version
     if (myOutput) {
       console.log('Will bump version')
@@ -71,7 +68,6 @@ async function run(): Promise<void> {
         // there are sometimes empty lines
         if (commit) {
           const message = commit.split(/\s(.*)/)[1].toLowerCase()
-          core.debug(`Message: ${message}`)
           if (
             majorTokens.length > 0 &&
             majorTokens.some(token => message.includes(token))
@@ -100,7 +96,6 @@ async function run(): Promise<void> {
         path.resolve(__dirname, '../', packagePath),
         newPackageContent
       )
-      core.debug('Updated package.json')
       await exec('git', [
         'config',
         'user.name',

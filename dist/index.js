@@ -48,7 +48,6 @@ const semver = __importStar(__webpack_require__(1383));
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const githubToken = core.getInput('githubtoken', { required: true });
             const packagePath = core.getInput('packagepath', { required: true });
             const majorTokens = core
                 .getInput('majortokens', {
@@ -67,8 +66,6 @@ function run() {
             const packageContent = fs.readFileSync(path_1.default.resolve(__dirname, '../', packagePath), 'utf-8');
             const version = utils_1.readVersion(packageContent);
             const lineNo = utils_1.getLineNo(packageContent);
-            core.debug(`Token starts with: ${githubToken.slice(0, 2)}`);
-            core.debug(` Version: ${version}, line number ${lineNo}`);
             let myOutput = '';
             const options = {
                 listeners: {
@@ -87,7 +84,6 @@ function run() {
             // needs to reset output every time
             myOutput = '';
             yield exec_1.exec('git', ['log', `${lastChangeHash}..HEAD`, `--format=oneline`, `--all`], options);
-            console.log(`History since last change: ${myOutput}`);
             let newVersion = version;
             if (myOutput) {
                 console.log('Will bump version');
@@ -96,7 +92,6 @@ function run() {
                     // there are sometimes empty lines
                     if (commit) {
                         const message = commit.split(/\s(.*)/)[1].toLowerCase();
-                        core.debug(`Message: ${message}`);
                         if (majorTokens.length > 0 &&
                             majorTokens.some(token => message.includes(token))) {
                             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -116,7 +111,6 @@ function run() {
                 }
                 const newPackageContent = packageContent.replace(`"version": "${version}"`, `"version": "${newVersion}"`);
                 fs.writeFileSync(path_1.default.resolve(__dirname, '../', packagePath), newPackageContent);
-                core.debug('Updated package.json');
                 yield exec_1.exec('git', [
                     'config',
                     'user.name',
