@@ -47,89 +47,98 @@ const utils_1 = __webpack_require__(918);
 const semver = __importStar(__webpack_require__(1383));
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        const githubToken = core.getInput('githubtoken', { required: true });
-        const packagePath = core.getInput('packagepath', { required: true });
-        const majorTokens = core
-            .getInput('majortokens', {
-            required: false
-        })
-            .split(',')
-            .map(token => token.trim().toLowerCase());
-        const minorTokens = core
-            .getInput('minortokens', {
-            required: false
-        })
-            .split(',')
-            .map(token => token.trim().toLowerCase());
-        core.debug(`Major: ${majorTokens}`);
-        core.debug(`Minor: ${minorTokens}`);
-        const packageContent = fs.readFileSync(path_1.default.resolve(__dirname, '../', packagePath), 'utf-8');
-        const version = utils_1.readVersion(packageContent);
-        const lineNo = utils_1.getLineNo(packageContent);
-        core.debug(`Token starts with: ${githubToken.slice(0, 2)}`);
-        core.debug(` Version: ${version}, line number ${lineNo}`);
-        let myOutput = '';
-        const options = {
-            listeners: {
-                stdout: (data) => {
-                    myOutput = data.toString();
+        try {
+            const githubToken = core.getInput('githubtoken', { required: true });
+            const packagePath = core.getInput('packagepath', { required: true });
+            const majorTokens = core
+                .getInput('majortokens', {
+                required: false
+            })
+                .split(',')
+                .filter(token => token)
+                .map(token => token.trim().toLowerCase());
+            const minorTokens = core
+                .getInput('minortokens', {
+                required: false
+            })
+                .split(',')
+                .filter(token => token)
+                .map(token => token.trim().toLowerCase());
+            core.debug(`Major: ${majorTokens}`);
+            core.debug(`Minor: ${minorTokens}`);
+            const packageContent = fs.readFileSync(path_1.default.resolve(__dirname, '../', packagePath), 'utf-8');
+            const version = utils_1.readVersion(packageContent);
+            const lineNo = utils_1.getLineNo(packageContent);
+            core.debug(`Token starts with: ${githubToken.slice(0, 2)}`);
+            core.debug(` Version: ${version}, line number ${lineNo}`);
+            let myOutput = '';
+            const options = {
+                listeners: {
+                    stdout: (data) => {
+                        myOutput = data.toString();
+                    }
+                },
+                silent: true
+            };
+            yield exec_1.exec('git', [
+                'log',
+                `-L${lineNo},${lineNo}:${path_1.default.resolve(__dirname, '../', packagePath)}`
+            ], options);
+            const lastChangeHash = myOutput.split(/[\r?\n\s]/)[1];
+            console.log(`Last change commit hash: ${lastChangeHash}, version: ${version}`);
+            // needs to reset output every time
+            myOutput = '';
+            yield exec_1.exec('git', ['log', `${lastChangeHash}..HEAD`, `--format=oneline`], options);
+            let newVersion = version;
+            if (myOutput) {
+                console.log('Will bump version');
+                const commitsToParse = myOutput.split(/\r?\n/);
+                for (const commit of Object.values(commitsToParse).reverse()) {
+                    // there are sometimes empty lines
+                    if (commit) {
+                        const message = commit.split(/\s(.*)/)[1].toLowerCase();
+                        core.debug(`Message: ${message}`);
+                        if (majorTokens.length > 0 &&
+                            majorTokens.some(token => message.includes(token))) {
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                            newVersion = semver.inc(newVersion, 'major');
+                        }
+                        else if (minorTokens.length > 0 &&
+                            minorTokens.some(token => message.includes(token))) {
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                            newVersion = semver.inc(newVersion, 'minor');
+                        }
+                        else {
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                            newVersion = semver.inc(newVersion, 'patch');
+                        }
+                        console.log(`Commit: ${commit} new Version: ${newVersion}`);
+                    }
                 }
-            },
-            silent: true
-        };
-        yield exec_1.exec('git', [
-            'log',
-            `-L${lineNo},${lineNo}:${path_1.default.resolve(__dirname, '../', packagePath)}`
-        ], options);
-        const lastChangeHash = myOutput.split(/[\r?\n\s]/)[1];
-        core.debug(lastChangeHash);
-        // needs to reset output every time
-        myOutput = '';
-        yield exec_1.exec('git', ['log', `${lastChangeHash}..HEAD`, `--format=oneline`], options);
-        let newVersion = version;
-        if (myOutput) {
-            console.log('Will bump version');
-            const commitsToParse = myOutput.split(/\r?\n/);
-            for (const commit of Object.values(commitsToParse).reverse()) {
-                // there are sometimes empty lines
-                if (commit) {
-                    const message = commit.split(/\s(.*)/)[1].toLowerCase();
-                    core.debug(`Message: ${message}`);
-                    if (majorTokens && majorTokens.some(token => message.includes(token))) {
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        newVersion = semver.inc(newVersion, 'major');
-                    }
-                    else if (minorTokens &&
-                        minorTokens.some(token => message.includes(token))) {
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        newVersion = semver.inc(newVersion, 'minor');
-                    }
-                    else {
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        newVersion = semver.inc(newVersion, 'patch');
-                    }
-                }
+                console.log(newVersion);
+                const newPackageContent = packageContent.replace(`"version": "${version}"`, `"version": "${newVersion}"`);
+                fs.writeFileSync(path_1.default.resolve(__dirname, '../', packagePath), newPackageContent);
+                core.debug('Updated package.json');
+                yield exec_1.exec('git', [
+                    'config',
+                    'user.name',
+                    `"${process.env.GITHUB_USER || 'Automated Version Bump'}"`
+                ]);
+                yield exec_1.exec('git', [
+                    'config',
+                    'user.email',
+                    `"${process.env.GITHUB_EMAIL || 'bump-version@users.noreply.github.com'}"`
+                ]);
+                yield exec_1.exec('git', ['commit', '-am', 'Bump version']);
+                yield exec_1.exec('git', ['push']);
+                console.log('Pushed new version file');
             }
-            console.log(newVersion);
-            const newPackageContent = packageContent.replace(`"version": "${version}"`, `"version": "${newVersion}"`);
-            fs.writeFileSync(path_1.default.resolve(__dirname, '../', packagePath), newPackageContent);
-            core.debug('Updated package.json');
-            yield exec_1.exec('git', [
-                'config',
-                'user.name',
-                `"${process.env.GITHUB_USER || 'Automated Version Bump'}"`
-            ]);
-            yield exec_1.exec('git', [
-                'config',
-                'user.email',
-                `"${process.env.GITHUB_EMAIL || 'bump-version@users.noreply.github.com'}"`
-            ]);
-            yield exec_1.exec('git', ['commit', '-am', 'Bump version']);
-            yield exec_1.exec('git', ['push']);
-            console.log('Pushed new version file');
+            else {
+                console.log('No changes applied');
+            }
         }
-        else {
-            console.log('No changes applied');
+        catch (error) {
+            console.log(error);
         }
     });
 }
