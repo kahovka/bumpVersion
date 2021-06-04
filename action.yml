@@ -1,11 +1,21 @@
-name: 'Your name here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'Bump version action'
+description: 'Action to bump version'
+author: 'kahovka'
 inputs:
-  milliseconds: # change this
+  githubtoken: 
     required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+    description: 'github token for action'
+    default: $ {{ secrets.GITHUB_TOKEN }} 
+  packagepath: 
+    required: true
+    description: 'path to package.json'
+    default: 'package.json'
+  majortokens: 
+    required: false
+    description: 'keywords to bump major version'
+  minortokens:
+    required: false
+    description: 'keywords to bump minor version'
 runs:
   using: 'node12'
   main: 'dist/index.js'
