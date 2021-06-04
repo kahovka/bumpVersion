@@ -64,8 +64,6 @@ function run() {
                 .split(',')
                 .filter(token => token)
                 .map(token => token.trim().toLowerCase());
-            core.debug(`Major: ${majorTokens}`);
-            core.debug(`Minor: ${minorTokens}`);
             const packageContent = fs.readFileSync(path_1.default.resolve(__dirname, '../', packagePath), 'utf-8');
             const version = utils_1.readVersion(packageContent);
             const lineNo = utils_1.getLineNo(packageContent);
@@ -88,7 +86,8 @@ function run() {
             console.log(`Last change commit hash: ${lastChangeHash}, version: ${version}`);
             // needs to reset output every time
             myOutput = '';
-            yield exec_1.exec('git', ['log', `${lastChangeHash}..HEAD`, `--format=oneline`], options);
+            yield exec_1.exec('git', ['log', `${lastChangeHash}..HEAD`, `--format=oneline`, `--all`], options);
+            console.log(`History since last change: ${myOutput}`);
             let newVersion = version;
             if (myOutput) {
                 console.log('Will bump version');
@@ -115,7 +114,6 @@ function run() {
                         console.log(`Commit: ${commit} new Version: ${newVersion}`);
                     }
                 }
-                console.log(newVersion);
                 const newPackageContent = packageContent.replace(`"version": "${version}"`, `"version": "${newVersion}"`);
                 fs.writeFileSync(path_1.default.resolve(__dirname, '../', packagePath), newPackageContent);
                 core.debug('Updated package.json');

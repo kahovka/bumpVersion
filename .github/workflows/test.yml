@@ -18,3 +18,6 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./
+        with:
+          majortokens: 'Major'
+          minortokens: 'Minor'  

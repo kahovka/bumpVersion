@@ -25,8 +25,6 @@ async function run(): Promise<void> {
       .filter(token => token)
       .map(token => token.trim().toLowerCase())
 
-    core.debug(`Major: ${majorTokens}`)
-    core.debug(`Minor: ${minorTokens}`)
     const packageContent = fs.readFileSync(
       path.resolve(__dirname, '../', packagePath),
       'utf-8'
@@ -61,9 +59,10 @@ async function run(): Promise<void> {
     myOutput = ''
     await exec(
       'git',
-      ['log', `${lastChangeHash}..HEAD`, `--format=oneline`],
+      ['log', `${lastChangeHash}..HEAD`, `--format=oneline`, `--all`],
       options
     )
+    console.log(`History since last change: ${myOutput}`)
     let newVersion = version
     if (myOutput) {
       console.log('Will bump version')
@@ -89,12 +88,9 @@ async function run(): Promise<void> {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             newVersion = semver.inc(newVersion, 'patch')!
           }
-
           console.log(`Commit: ${commit} new Version: ${newVersion}`)
         }
       }
-
-      console.log(newVersion)
       const newPackageContent = packageContent.replace(
         `"version": "${version}"`,
         `"version": "${newVersion}"`
