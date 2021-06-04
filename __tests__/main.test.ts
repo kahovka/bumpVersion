@@ -50,6 +50,8 @@ describe('action tests', () => {
     
     process.env['INPUT_GITHUBTOKEN'] = '123'
     process.env['INPUT_PACKAGEPATH'] = 'package.json'
+    process.env['INPUT_MAJORTOKENS'] = 'pUll, Loop, dog'
+    process.env['INPUT_MINORTOKENS'] = 'Push, oF, word'
     const np = process.execPath
     const ip = path.join(__dirname, '..', 'lib', 'main.js')
     const options: cp.ExecFileSyncOptions = {
