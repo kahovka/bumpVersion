@@ -74,7 +74,8 @@ function run() {
                 stdout: (data) => {
                     myOutput = data.toString();
                 }
-            }
+            },
+            silent: true
         };
         yield exec_1.exec('git', [
             'log',
@@ -87,7 +88,7 @@ function run() {
         yield exec_1.exec('git', ['log', `${lastChangeHash}..HEAD`, `--format=oneline`], options);
         let newVersion = version;
         if (myOutput) {
-            core.debug('Will bump version');
+            console.log('Will bump version');
             const commitsToParse = myOutput.split(/\r?\n/);
             for (const commit of Object.values(commitsToParse).reverse()) {
                 // there are sometimes empty lines
@@ -109,7 +110,7 @@ function run() {
                     }
                 }
             }
-            core.debug(newVersion);
+            console.log(newVersion);
             const newPackageContent = packageContent.replace(`"version": "${version}"`, `"version": "${newVersion}"`);
             fs.writeFileSync(path_1.default.resolve(__dirname, '../', packagePath), newPackageContent);
             core.debug('Updated package.json');
@@ -125,10 +126,10 @@ function run() {
             ]);
             yield exec_1.exec('git', ['commit', '-am', 'Bump version']);
             yield exec_1.exec('git', ['push']);
-            core.debug('Pushed new version file');
+            console.log('Pushed new version file');
         }
         else {
-            core.debug('No changes applied');
+            console.log('No changes applied');
         }
     });
 }

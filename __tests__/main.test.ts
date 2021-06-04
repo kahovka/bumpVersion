@@ -8,26 +8,7 @@ import * as sinon from 'sinon'
 import { ExecOptions } from '@actions/exec'
 
 describe('action tests', () => {
-  let sandbox: sinon.SinonSandbox
 
-  beforeAll(() => {
-    sandbox = sinon.createSandbox()
-    sandbox.stub(actexec, 'exec').callsFake(async function fakeExec(commandLine: string, args?: string[], options?: ExecOptions): Promise<number> {
-    const fullCommand = args ? commandLine + ' ' + args.join(' ') : commandLine
-    if (fullCommand.includes('user.name') || fullCommand.includes('user.email') || fullCommand.includes('commit') || fullCommand.includes('push')) {
-      return Promise.resolve(1)
-    }
-    if (options && fullCommand.includes('log -L')){
-      return Promise.resolve(1)
-    }
-    return Promise.resolve(1)
-    })
-  })
-
-  afterAll(() => {
-    sandbox.restore()
-  })
-  
   test('reads version from file', () => {
     // use project package.json copy
     const sampleContent = fs.readFileSync(path.resolve(__dirname, 'test-package.json'), 'utf-8')
@@ -64,6 +45,5 @@ describe('action tests', () => {
       expect(true).toBeFalsy()
    }
   })
-
 })
 

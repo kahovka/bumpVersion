@@ -38,7 +38,8 @@ async function run(): Promise<void> {
       stdout: (data: Buffer) => {
         myOutput = data.toString()
       }
-    }
+    },
+    silent: true
   }
   await exec(
     'git',
@@ -61,7 +62,7 @@ async function run(): Promise<void> {
 
   let newVersion = version
   if (myOutput) {
-    core.debug('Will bump version')
+    console.log('Will bump version')
     const commitsToParse = myOutput.split(/\r?\n/)
     for (const commit of Object.values(commitsToParse).reverse()) {
       // there are sometimes empty lines
@@ -83,7 +84,7 @@ async function run(): Promise<void> {
         }
       }
     }
-    core.debug(newVersion)
+    console.log(newVersion)
     const newPackageContent = packageContent.replace(
       `"version": "${version}"`,
       `"version": "${newVersion}"`
@@ -106,9 +107,9 @@ async function run(): Promise<void> {
     ])
     await exec('git', ['commit', '-am', 'Bump version'])
     await exec('git', ['push'])
-    core.debug('Pushed new version file')
+    console.log('Pushed new version file')
   } else {
-    core.debug('No changes applied')
+    console.log('No changes applied')
   }
 }
 
