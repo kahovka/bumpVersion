@@ -110,31 +110,25 @@ function run() {
                 }
             }
             core.debug(newVersion);
-            // const newPackageContent = packageContent.replace(
-            //   `"version": "${version}"`,
-            //   `"version": "${newVersion}"`
-            // )
-            // fs.writeFileSync(
-            //   path.resolve(__dirname, '../', packagePath),
-            //   newPackageContent
-            // )
-            // core.debug('Updated package.json')
-            // await exec('git', [
-            //   'config',
-            //   'user.name',
-            //   `"${process.env.GITHUB_USER || 'Automated Version Bump'}"`
-            // ])
-            // await exec('git', [
-            //   'config',
-            //   'user.email',
-            //   `"${process.env.GITHUB_EMAIL || 'bump-version@users.noreply.github.com'}"`
-            // ])
-            // await exec('git', ['commit', '-am', 'Bump version'])
-            // await exec('git', ['push'])
+            const newPackageContent = packageContent.replace(`"version": "${version}"`, `"version": "${newVersion}"`);
+            fs.writeFileSync(path_1.default.resolve(__dirname, '../', packagePath), newPackageContent);
+            core.debug('Updated package.json');
+            yield exec_1.exec('git', [
+                'config',
+                'user.name',
+                `"${process.env.GITHUB_USER || 'Automated Version Bump'}"`
+            ]);
+            yield exec_1.exec('git', [
+                'config',
+                'user.email',
+                `"${process.env.GITHUB_EMAIL || 'bump-version@users.noreply.github.com'}"`
+            ]);
+            yield exec_1.exec('git', ['commit', '-am', 'Bump version']);
+            yield exec_1.exec('git', ['push']);
             core.debug('Pushed new version file');
         }
         else {
-            core.debug('Error. No changes applied');
+            core.debug('No changes applied');
         }
     });
 }
