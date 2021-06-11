@@ -16,6 +16,9 @@ inputs:
   minortokens:
     required: false
     description: 'keywords to bump minor version'
+  tagpolicy:
+    required: false
+    description: 'tag only some versions, takes minor, major, all. Minor includes major.'
 runs:
   using: 'node12'
   main: 'dist/index.js'
