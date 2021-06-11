@@ -24,6 +24,10 @@ async function run(): Promise<void> {
       .filter(token => token)
       .map(token => token.trim().toLowerCase())
 
+    const tagPolicy: string = core
+      .getInput('tagpolicy', { required: false })
+      .toLowerCase()
+
     const packageContent = fs.readFileSync(
       path.resolve(__dirname, '../', packagePath),
       'utf-8'
@@ -113,6 +117,24 @@ async function run(): Promise<void> {
       console.log('Pushed new version file')
     } else {
       console.log('No changes applied')
+    }
+
+    // tagging
+    if (tagPolicy) {
+      console.log('Tag policy found, will check for tagging')
+      const versionDiff = semver.diff(version, newVersion)
+      if (
+        (tagPolicy === 'major' && versionDiff === 'major') ||
+        (tagPolicy === 'minor' &&
+          (versionDiff === 'minor' || versionDiff === 'major')) ||
+        tagPolicy === 'all'
+      ) {
+        await exec('git', ['tag', `${newVersion}`])
+        await exec('git', ['push', 'origin', '--tags'])
+        console.log('Added new tag')
+      } else {
+        console.log('Skipping tagging')
+      }
     }
   } catch (error) {
     console.log(error)

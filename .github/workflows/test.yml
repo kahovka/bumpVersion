@@ -2,7 +2,7 @@ name: 'build-test'
 on: push # rebuild any PRs and main branch changes
 
 jobs:
-  build: # make sure build/ci work properly
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -21,4 +21,5 @@ jobs:
       - uses: ./
         with:
           majortokens: 'Major'
-          minortokens: 'Minor'  
+          minortokens: 'Minor'
+          tagpolicy: 'Minor'

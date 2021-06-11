@@ -63,6 +63,9 @@ function run() {
                 .split(',')
                 .filter(token => token)
                 .map(token => token.trim().toLowerCase());
+            const tagPolicy = core
+                .getInput('tagpolicy', { required: false })
+                .toLowerCase();
             const packageContent = fs.readFileSync(path_1.default.resolve(__dirname, '../', packagePath), 'utf-8');
             const version = utils_1.readVersion(packageContent);
             const lineNo = utils_1.getLineNo(packageContent);
@@ -127,6 +130,22 @@ function run() {
             }
             else {
                 console.log('No changes applied');
+            }
+            // tagging
+            if (tagPolicy) {
+                console.log('Tag policy found, will check for tagging');
+                const versionDiff = semver.diff(version, newVersion);
+                if ((tagPolicy === 'major' && versionDiff === 'major') ||
+                    (tagPolicy === 'minor' &&
+                        (versionDiff === 'minor' || versionDiff === 'major')) ||
+                    tagPolicy === 'all') {
+                    yield exec_1.exec('git', ['tag', `${newVersion}`]);
+                    yield exec_1.exec('git', ['push', 'origin', '--tags']);
+                    console.log('Added new tag');
+                }
+                else {
+                    console.log('Skipping tagging');
+                }
             }
         }
         catch (error) {
