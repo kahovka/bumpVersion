@@ -144,7 +144,7 @@ async function run(): Promise<void> {
           (versionDiff === 'minor' || versionDiff === 'major')) ||
         tagPolicy === 'all'
       ) {
-        await exec('git', ['tag', `${newVersion}`])
+        await exec('git', ['tag', `v${newVersion}`])
         await exec('git', ['push', 'origin', '--tags'])
         console.log('Added new tag')
       } else {
