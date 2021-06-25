@@ -7,6 +7,7 @@ To bump minor or major version - specify major and minor tokes in workflow file.
 For tagging a tagging policy is required. It can be 'major', 'minor' or 'all', based on how much the aversion should be changed to trigger tagging. Note that major version change is included in 'minor'. Tagging happens once, for the bump commit.  
 
 There is also an option to squash new version commit with a previous one, but that's a bit tricky, since a resulting commit will be authored byt the action. One can always pull and squash manually, if desired. 
+
 ### Example usage
 See .github/workflows/test.yml for example
 
