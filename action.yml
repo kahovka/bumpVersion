@@ -18,7 +18,11 @@ inputs:
     description: 'keywords to bump minor version'
   tagpolicy:
     required: false
-    description: 'tag only some versions, takes minor, major, all. Minor includes major.'
+    description: 'tag only some versions, takes minor, major, all. Minor includes major'
+  squash:
+    required: false
+    description: 'whether to squash bump commit with previous'
+    default: 0
 runs:
   using: 'node12'
   main: 'dist/index.js'

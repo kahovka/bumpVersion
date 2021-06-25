@@ -28,6 +28,10 @@ async function run(): Promise<void> {
       .getInput('tagpolicy', { required: false })
       .toLowerCase()
 
+    const squash = Boolean(
+      JSON.parse(core.getInput('squash', { required: false }))
+    )
+
     const packageContent = fs.readFileSync(
       path.resolve(__dirname, '../', packagePath),
       'utf-8'
@@ -115,6 +119,17 @@ async function run(): Promise<void> {
       await exec('git', ['push'])
 
       console.log('Pushed new version file')
+
+      // squash
+      if (squash) {
+        await exec('git', ['reset', '--soft', 'HEAD~2'])
+        myOutput = ''
+        await exec('git', ['log', '--format=%B', '--reverse, HEAD..HEAD@{2}'])
+        await exec('git', ['commit', `-m "${myOutput}"`])
+        await exec('git', ['push', '-f'])
+
+        console.log('Squashed last two commits')
+      }
     } else {
       console.log('No changes applied')
     }

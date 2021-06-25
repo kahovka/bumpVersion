@@ -66,6 +66,7 @@ function run() {
             const tagPolicy = core
                 .getInput('tagpolicy', { required: false })
                 .toLowerCase();
+            const squash = Boolean(JSON.parse(core.getInput('squash', { required: false })));
             const packageContent = fs.readFileSync(path_1.default.resolve(__dirname, '../', packagePath), 'utf-8');
             const version = utils_1.readVersion(packageContent);
             const lineNo = utils_1.getLineNo(packageContent);
@@ -127,6 +128,15 @@ function run() {
                 yield exec_1.exec('git', ['commit', '-am', 'Bump version']);
                 yield exec_1.exec('git', ['push']);
                 console.log('Pushed new version file');
+                // squash
+                if (squash) {
+                    yield exec_1.exec('git', ['reset', '--soft', 'HEAD~2']);
+                    myOutput = '';
+                    yield exec_1.exec('git', ['log', '--format=%B', '--reverse, HEAD..HEAD@{2}']);
+                    yield exec_1.exec('git', ['commit', `-m "${myOutput}"`]);
+                    yield exec_1.exec('git', ['push', '-f']);
+                    console.log('Squashed last two commits');
+                }
             }
             else {
                 console.log('No changes applied');
