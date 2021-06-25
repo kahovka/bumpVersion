@@ -1,4 +1,4 @@
-name: 'Bump version action'
+name: 'Simple bump version action'
 description: 'Action to bump version'
 author: 'kahovka'
 inputs:

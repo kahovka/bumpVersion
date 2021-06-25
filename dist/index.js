@@ -149,7 +149,7 @@ function run() {
                     (tagPolicy === 'minor' &&
                         (versionDiff === 'minor' || versionDiff === 'major')) ||
                     tagPolicy === 'all') {
-                    yield exec_1.exec('git', ['tag', `${newVersion}`]);
+                    yield exec_1.exec('git', ['tag', `v${newVersion}`]);
                     yield exec_1.exec('git', ['push', 'origin', '--tags']);
                     console.log('Added new tag');
                 }
